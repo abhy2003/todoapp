@@ -86,7 +86,7 @@ class _LoginscreenState extends State<Loginscreen> {
                 final passwordRegex = RegExp(r'^(?=.*[A-Z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$');
 
                 if (!passwordRegex.hasMatch(value)) {
-                  return 'Password must be at least 6 characters long, \ncontain an uppercase letter, a number, and a special character (#, *)';
+                  return 'Password must be at least 6 characters long, \ncontain an uppercase letter, a number, and a special character';
                 }
                 return null;
               },
@@ -111,7 +111,6 @@ class _LoginscreenState extends State<Loginscreen> {
                 print('Form is valid. Logging in...');
                 Get.to(()=>Signupscreen());
               } else {
-                // Form is invalid, show errors
                 print('Form is invalid. Please correct the errors.');
               }
             },
