@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:todoapp/view/Homescreen.dart';
 import 'package:todoapp/view/Signupscreen.dart';
 
 class Loginscreen extends StatefulWidget {
@@ -109,13 +110,13 @@ class _LoginscreenState extends State<Loginscreen> {
               if (_formKey.currentState?.validate() ?? false) {
                 // Form is valid, perform login action
                 print('Form is valid. Logging in...');
-                Get.to(()=>Signupscreen());
+                Get.off(()=>Homescreen());
               } else {
                 print('Form is invalid. Please correct the errors.');
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
+              backgroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(100),
               ),
@@ -123,7 +124,7 @@ class _LoginscreenState extends State<Loginscreen> {
             ),
             child: Text(
               'Login',
-              style: GoogleFonts.poppins(fontSize: 15.0, color: Colors.black),
+              style: GoogleFonts.poppins(fontSize: 15.0, color: Colors.white),
             ),
           ),
           SizedBox(height: 3),

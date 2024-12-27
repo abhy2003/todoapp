@@ -128,7 +128,7 @@ class _SignupscreenState extends State<Signupscreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100),
                 ),
@@ -136,7 +136,7 @@ class _SignupscreenState extends State<Signupscreen> {
               ),
               child: Text(
                 'Signup',
-                style: GoogleFonts.poppins(fontSize: 15.0, color: Colors.black),
+                style: GoogleFonts.poppins(fontSize: 15.0, color: Colors.white),
               ),
             ),
             SizedBox(height: 3),
