@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:todoapp/view/Homescreen.dart';
 import 'package:todoapp/view/Signupscreen.dart';
@@ -16,6 +17,7 @@ class Loginscreen extends StatefulWidget {
 
 class _LoginscreenState extends State<Loginscreen> {
   bool _isPasswordVisible = false;
+  final GetStorage _storage = GetStorage();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -113,29 +115,28 @@ class _LoginscreenState extends State<Loginscreen> {
           ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState?.validate() ?? false) {
-                // Get the values from the controllers
                 String email = _emailController.text;
                 String password = _passwordController.text;
 
                 try {
-
                   final userCredential = await FirebaseAuth.instance
                       .signInWithEmailAndPassword(email: email, password: password);
 
-                  // Check if user is verified
                   if (userCredential.user?.emailVerified ?? false) {
-                    // Navigate to the home screen after successful login
+                    // Store session
+                    _storage.write('isLoggedIn', true);
+                    _storage.write('userId', userCredential.user?.uid);
+
                     Get.offAll(() => Homescreen());
                   } else {
-                    // Show a snackbar that email is not verified
-                    Get.snackbar('Error', 'Please verify your email first.',
+                    Get.snackbar('Error', 'Please check your gmail and verify it.',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: Colors.red,
                         colorText: Colors.white);
                   }
                 } on FirebaseAuthException catch (e) {
-                  // Handle errors from Firebase Auth
-                  String errorMessage = e.message ?? 'An unexpected error occurred';
+                  String errorMessage =
+                      e.message ?? 'An unexpected error occurred';
                   Get.snackbar('Error', errorMessage,
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: Colors.red,

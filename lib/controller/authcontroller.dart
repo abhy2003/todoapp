@@ -2,12 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../model/authmodel.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GetStorage _storage = GetStorage();
 
   Future<void> signUp(String name, String email, String password, String confirmPassword) async {
     if (password != confirmPassword) {
@@ -23,17 +25,13 @@ class AuthController extends GetxController {
 
       final user = userCredential.user;
       if (user != null) {
-        // Create a UserModel object with the user's details
         final userModel = UserModel(
-          name: name,  // added name field
+          name: name,
           email: email,
           userId: user.uid,
         );
 
-        // Store the user's data in the Firestore 'users' collection
         await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
-
-        // Send the email verification
         await user.sendEmailVerification();
 
         _showSuccessMessage('Verification email sent. Please check your inbox.');
@@ -50,11 +48,41 @@ class AuthController extends GetxController {
         email: email,
         password: password,
       );
-      return userCredential.user;
+
+      final user = userCredential.user;
+      if (user != null) {
+        // Store user session
+        _storeSession(user.uid);
+        Get.offAllNamed('/home');
+      }
+      return user;
     } on FirebaseAuthException catch (e) {
       _handleAuthError(e);
       return null;
     }
+  }
+
+  Future<void> logout() async {
+    await _firebaseAuth.signOut();
+    _clearSession();
+    Get.offAllNamed('/login');
+  }
+
+  bool isUserLoggedIn() {
+    return _storage.read('isLoggedIn') ?? false;
+  }
+
+  String? getUserId() {
+    return _storage.read('userId');
+  }
+
+  void _storeSession(String userId) {
+    _storage.write('isLoggedIn', true);
+    _storage.write('userId', userId);
+  }
+
+  void _clearSession() {
+    _storage.erase();
   }
 
   void _handleAuthError(FirebaseAuthException e) {

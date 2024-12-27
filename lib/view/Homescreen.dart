@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class Homescreen extends StatefulWidget {
@@ -60,15 +62,14 @@ class _HomescreenState extends State<Homescreen> {
                     },
                   ),
                   Switch(
-                    value: task['status'] == 'Complete',  // Toggle based on task's status
+                    value: task['status'] == 'Complete',
                     onChanged: (bool value) {
                       setState(() {
-                        // Update the task status here
                         task['status'] = value ? 'Complete' : 'Pending';
                       });
                     },
-                    activeColor: Colors.green,  // Color for the switch when it's active
-                    inactiveThumbColor: Colors.grey, // Color for the switch when inactive
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.grey,
                   ),
                 ],
               ),
@@ -174,7 +175,6 @@ floatingActionButton: FloatingActionButton(backgroundColor:Colors.orange,onPress
                     if (taskNameController.text.isNotEmpty &&
                         taskDescriptionController.text.isNotEmpty &&
                         selectedDate != null) {
-                      // Add task to the list
                       setState(() {
                         tasks.add({
                           'name': taskNameController.text,
@@ -183,7 +183,7 @@ floatingActionButton: FloatingActionButton(backgroundColor:Colors.orange,onPress
                           'status': selectedStatus,
                         });
                       });
-                      Navigator.pop(context); // Close the bottom sheet
+                      Get.off(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(

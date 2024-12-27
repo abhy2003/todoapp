@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:todoapp/view/Loginscreen.dart';
 
@@ -16,6 +17,7 @@ class Signupscreen extends StatefulWidget {
 class _SignupscreenState extends State<Signupscreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final GetStorage _storage = GetStorage();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _namecontroller = TextEditingController();
@@ -151,7 +153,6 @@ class _SignupscreenState extends State<Signupscreen> {
                       return;
                     }
 
-
                     final userCredential = await FirebaseAuth.instance
                         .createUserWithEmailAndPassword(
                       email: email,
@@ -170,12 +171,12 @@ class _SignupscreenState extends State<Signupscreen> {
                         'createdAt': FieldValue.serverTimestamp(),
                       });
 
-
                       await user.sendEmailVerification();
 
+                      _storage.write('isLoggedIn', true);
+                      _storage.write('userId', user.uid);
 
                       Get.to(() => Loginscreen());
-
 
                       Get.snackbar('Success', 'User created successfully. Please verify your email.',
                           snackPosition: SnackPosition.BOTTOM,
@@ -194,7 +195,6 @@ class _SignupscreenState extends State<Signupscreen> {
                   print('Form is invalid. Please correct the errors.');
                 }
               },
-
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 shape: RoundedRectangleBorder(

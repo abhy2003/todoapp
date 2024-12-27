@@ -5,7 +5,6 @@ class UserModel {
 
   UserModel({required this.name, required this.email, required this.userId});
 
-  // Convert to a map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -14,7 +13,6 @@ class UserModel {
     };
   }
 
-  // Convert Firestore document to UserModel
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       name: map['name'],
