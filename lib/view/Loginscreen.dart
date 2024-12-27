@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,8 @@ class Loginscreen extends StatefulWidget {
 class _LoginscreenState extends State<Loginscreen> {
   bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +39,7 @@ class _LoginscreenState extends State<Loginscreen> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextFormField(
+              controller: _emailController,
               decoration: InputDecoration(
                 labelText: "Email",
                 labelStyle: GoogleFonts.poppins(color: Colors.black),
@@ -62,6 +66,7 @@ class _LoginscreenState extends State<Loginscreen> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextFormField(
+              controller: _passwordController,
               obscureText: !_isPasswordVisible, 
               decoration: InputDecoration(
                 labelText: "Password",
@@ -106,15 +111,42 @@ class _LoginscreenState extends State<Loginscreen> {
                 ),
               )),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_formKey.currentState?.validate() ?? false) {
-                // Form is valid, perform login action
-                print('Form is valid. Logging in...');
-                Get.off(()=>Homescreen());
+                // Get the values from the controllers
+                String email = _emailController.text;
+                String password = _passwordController.text;
+
+                try {
+
+                  final userCredential = await FirebaseAuth.instance
+                      .signInWithEmailAndPassword(email: email, password: password);
+
+                  // Check if user is verified
+                  if (userCredential.user?.emailVerified ?? false) {
+                    // Navigate to the home screen after successful login
+                    Get.offAll(() => Homescreen());
+                  } else {
+                    // Show a snackbar that email is not verified
+                    Get.snackbar('Error', 'Please verify your email first.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white);
+                  }
+                } on FirebaseAuthException catch (e) {
+                  // Handle errors from Firebase Auth
+                  String errorMessage = e.message ?? 'An unexpected error occurred';
+                  Get.snackbar('Error', errorMessage,
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white);
+                }
               } else {
                 print('Form is invalid. Please correct the errors.');
               }
             },
+
+
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               shape: RoundedRectangleBorder(
@@ -129,7 +161,9 @@ class _LoginscreenState extends State<Loginscreen> {
           ),
           SizedBox(height: 3),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.off(Signupscreen());
+            },
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(60.0),
