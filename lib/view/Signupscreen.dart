@@ -176,7 +176,7 @@ class _SignupscreenState extends State<Signupscreen> {
                       _storage.write('isLoggedIn', true);
                       _storage.write('userId', user.uid);
 
-                      Get.to(() => Loginscreen());
+                      Get.off(() => Loginscreen());
 
                       Get.snackbar('Success', 'User created successfully. Please verify your email.',
                           snackPosition: SnackPosition.BOTTOM,
