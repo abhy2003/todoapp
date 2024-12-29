@@ -2,14 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 
 import '../model/authmodel.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GetStorage _storage = GetStorage();
+  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<void> signUp(String name, String email, String password, String confirmPassword) async {
     if (password != confirmPassword) {
@@ -51,8 +50,6 @@ class AuthController extends GetxController {
 
       final user = userCredential.user;
       if (user != null) {
-        // Store user session
-        _storeSession(user.uid);
         Get.offAllNamed('/home');
       }
       return user;
@@ -62,27 +59,65 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> logout() async {
-    await _firebaseAuth.signOut();
-    _clearSession();
-    Get.offAllNamed('/login');
+  Future<void> signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      print("Something went wrong");
+    }
   }
 
-  bool isUserLoggedIn() {
-    return _storage.read('isLoggedIn') ?? false;
+  Stream<Map<String, String>> getUserInfoStream() {
+    return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
+      if (user != null) {
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          String name = userDoc['name'] ?? 'No name available';
+          String email = userDoc['email'] ?? 'No email available';
+          print('User Info: Name: $name, Email: $email');
+
+          return {'name': name, 'email': email};
+        }
+      }
+      return {'name': 'No name', 'email': 'No email'};
+    });
   }
 
-  String? getUserId() {
-    return _storage.read('userId');
-  }
-
-  void _storeSession(String userId) {
-    _storage.write('isLoggedIn', true);
-    _storage.write('userId', userId);
-  }
-
-  void _clearSession() {
-    _storage.erase();
+  Widget buildAuthStateStream() {
+    return StreamBuilder<User?>(
+      stream: _firebaseAuth.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Something went wrong.'));
+        } else if (snapshot.hasData) {
+          User? user = snapshot.data;
+          return StreamBuilder<Map<String, String>>(
+            stream: getUserInfoStream(),
+            builder: (context, userInfoSnapshot) {
+              if (userInfoSnapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (userInfoSnapshot.hasError) {
+                return Center(child: Text('Error loading user data.'));
+              } else if (userInfoSnapshot.hasData) {
+                var userData = userInfoSnapshot.data;
+                return Center(child: Text('Welcome, ${userData?['name']} (${userData?['email']})'));
+              } else {
+                return Center(child: Text('User info not available.'));
+              }
+            },
+          );
+        } else {
+          return Center(
+            child: ElevatedButton(
+              onPressed: signOut,
+              child: Text('Logout'),
+            ),
+          );
+        }
+      },
+    );
   }
 
   void _handleAuthError(FirebaseAuthException e) {

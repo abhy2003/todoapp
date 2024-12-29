@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:todoapp/view/Homescreen.dart';
 import 'package:todoapp/view/Signupscreen.dart';
@@ -17,7 +16,6 @@ class Loginscreen extends StatefulWidget {
 
 class _LoginscreenState extends State<Loginscreen> {
   bool _isPasswordVisible = false;
-  final GetStorage _storage = GetStorage();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -69,7 +67,7 @@ class _LoginscreenState extends State<Loginscreen> {
             padding: const EdgeInsets.all(12.0),
             child: TextFormField(
               controller: _passwordController,
-              obscureText: !_isPasswordVisible, 
+              obscureText: !_isPasswordVisible,
               decoration: InputDecoration(
                 labelText: "Password",
                 labelStyle: GoogleFonts.poppins(color: Colors.black),
@@ -123,10 +121,6 @@ class _LoginscreenState extends State<Loginscreen> {
                       .signInWithEmailAndPassword(email: email, password: password);
 
                   if (userCredential.user?.emailVerified ?? false) {
-                    // Store session
-                    _storage.write('isLoggedIn', true);
-                    _storage.write('userId', userCredential.user?.uid);
-
                     Get.offAll(() => Homescreen());
                   } else {
                     Get.snackbar('Error', 'Please check your gmail and verify it.',

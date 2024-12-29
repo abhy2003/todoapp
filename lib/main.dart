@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:todoapp/view/Homescreen.dart';
 import 'package:todoapp/view/Loginscreen.dart';
 import 'package:todoapp/view/Signupscreen.dart';
+import 'package:todoapp/wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
@@ -20,8 +21,10 @@ class Myapp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      initialRoute: '/',
       getPages: [
-        GetPage(name: '/', page: () => Loginscreen(),),
+        GetPage(name: '/', page:() =>  Wrapper()),
+        GetPage(name: '/login', page: () => Loginscreen(),),
         GetPage(name: '/signup', page: () => Signupscreen(),),
         GetPage(name: '/homescreen', page: () => Homescreen(),)
       ],
