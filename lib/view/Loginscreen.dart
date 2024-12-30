@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:todoapp/view/Homescreen.dart';
 import 'package:todoapp/view/Signupscreen.dart';
 
+import '../controller/authcontroller.dart';
+
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key});
 
@@ -17,6 +19,7 @@ class Loginscreen extends StatefulWidget {
 class _LoginscreenState extends State<Loginscreen> {
   bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
+  final AuthController authController = Get.put(AuthController());
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -104,13 +107,23 @@ class _LoginscreenState extends State<Loginscreen> {
           Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  String email = _emailController.text.trim();
+                  if (email.isNotEmpty) {
+                    authController.resetPassword(email);
+                  } else {
+                    Get.snackbar('Error', 'Please enter your email to reset password.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white);
+                  }
+                },
                 child: Text(
                   'Forgot Password?',
                   style: GoogleFonts.poppins(color: Colors.blue),
                 ),
-              )),
-          ElevatedButton(
+              ),),
+            ElevatedButton(
             onPressed: () async {
               if (_formKey.currentState?.validate() ?? false) {
                 String email = _emailController.text;

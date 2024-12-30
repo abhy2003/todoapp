@@ -1,18 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 
 import '../model/authmodel.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<void> signUp(String name, String email, String password, String confirmPassword) async {
     if (password != confirmPassword) {
-      _showErrorMessage('Passwords do not match.');
+      _errormessage('Passwords do not match.');
       return;
     }
 
@@ -33,9 +34,29 @@ class AuthController extends GetxController {
         await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
         await user.sendEmailVerification();
 
-        _showSuccessMessage('Verification email sent. Please check your inbox.');
+        _sucessMessage('Verification email sent. Please check your inbox.');
         Get.offAllNamed('/login');
       }
+    } on FirebaseAuthException catch (e) {
+      _handleAuthError(e);
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    if (email.isEmpty) {
+      Get.snackbar('Error', 'Please enter your email to reset password.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+      return;
+    }
+
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      Get.snackbar('Success', 'Password reset email sent. Please check your inbox.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white);
     } on FirebaseAuthException catch (e) {
       _handleAuthError(e);
     }
@@ -123,18 +144,18 @@ class AuthController extends GetxController {
   void _handleAuthError(FirebaseAuthException e) {
     final errorMessage = _getErrorMessage(e.code);
     if (errorMessage.isNotEmpty) {
-      _showErrorMessage(errorMessage);
+      _errormessage(errorMessage);
     }
   }
 
-  void _showErrorMessage(String message) {
+  void _errormessage(String message) {
     Get.snackbar('Error', message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white);
   }
 
-  void _showSuccessMessage(String message) {
+  void _sucessMessage(String message) {
     Get.snackbar('Success', message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,

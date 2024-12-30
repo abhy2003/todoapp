@@ -32,6 +32,13 @@ import '../controller/authcontroller.dart';
                 profilescreen(context);
               },
             ),
+            IconButton(
+              icon: Icon(Icons.filter_alt),
+              onPressed: () {
+                // Add your filter logic here
+                print("Filter button tapped");
+              },
+            ),
           ],
           backgroundColor: Colors.orange,
           title: Text("Todo App",style: GoogleFonts.poppins(),),
@@ -74,9 +81,11 @@ import '../controller/authcontroller.dart';
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Edit Button
                         IconButton(
                           icon: Icon(Icons.edit, color: Colors.blue),
                           onPressed: () {
+                            editTodo(context, task.id);
                           },
                         ),
                         IconButton(
@@ -107,6 +116,7 @@ import '../controller/authcontroller.dart';
                 );
               },
             );
+
           },
         ),
 
@@ -123,7 +133,8 @@ import '../controller/authcontroller.dart';
       final TextEditingController taskDescriptionController = TextEditingController();
       DateTime? selectedDate;
       String selectedStatus = 'Pending';
-      String selectedValue = 'Personal'; // Default dropdown value
+      String selectedValue = 'Personal';
+      final _formKey = GlobalKey<FormState>();
 
       showModalBottomSheet(
         backgroundColor: Colors.white,
@@ -141,6 +152,7 @@ import '../controller/authcontroller.dart';
               top: 16,
             ),
             child: Form(
+              key: _formKey,
               child: ListView(
                 shrinkWrap: true,
                 children: [
@@ -159,6 +171,12 @@ import '../controller/authcontroller.dart';
                       labelStyle: GoogleFonts.poppins(),
                       border: OutlineInputBorder(),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a task name';
+                      }
+                      return null;
+                    },
                   ),
                   SizedBox(height: 16),
                   TextFormField(
@@ -169,6 +187,12 @@ import '../controller/authcontroller.dart';
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a task description';
+                      }
+                      return null;
+                    },
                   ),
                   SizedBox(height: 16),
                   Row(
@@ -219,31 +243,42 @@ import '../controller/authcontroller.dart';
                       labelText: 'Task Type',
                       border: OutlineInputBorder(),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a task type';
+                      }
+                      return null;
+                    },
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () async {
-                      if (taskNameController.text.isNotEmpty &&
-                          taskDescriptionController.text.isNotEmpty &&
-                          selectedDate != null) {
-                        // Get current user UID
-                        User? user = FirebaseAuth.instance.currentUser;
-                        if (user != null) {
-                          Map<String, dynamic> taskData = {
-                            'userId': user.uid, // Include the user's UID
-                            'name': taskNameController.text,
-                            'description': taskDescriptionController.text,
-                            'dueDate': selectedDate,
-                            'status': selectedStatus,
-                            'type': selectedValue,
-                            'createdAt': FieldValue.serverTimestamp(),
-                          };
+                      if (_formKey.currentState?.validate() ?? false) {
+                        if (selectedDate != null) {
+                          User? user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            Map<String, dynamic> taskData = {
+                              'userId': user.uid,
+                              'name': taskNameController.text,
+                              'description': taskDescriptionController.text,
+                              'dueDate': selectedDate,
+                              'status': selectedStatus,
+                              'type': selectedValue,
+                              'createdAt': FieldValue.serverTimestamp(),
+                            };
 
-                          await FirebaseFirestore.instance
-                              .collection('todo')
-                              .add(taskData);
+                            await FirebaseFirestore.instance
+                                .collection('todo')
+                                .add(taskData);
 
-                          Get.back();
+                            Get.back();
+                          }
+                        } else {
+                          Get.snackbar(
+                            'Error',
+                            'Please select a due date',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
                         }
                       }
                     },
@@ -265,142 +300,168 @@ import '../controller/authcontroller.dart';
 
 
 
-    void editTask(BuildContext context, int taskIndex) {
-      final task = tasks[taskIndex];
-      final TextEditingController taskNameController =
-      TextEditingController(text: task['name']);
-      final TextEditingController taskDescriptionController =
-      TextEditingController(text: task['description']);
-      DateTime? selectedDate = task['dueDate'];
-      String selectedStatus = task['status'];
-      String selectedType = task['type'];
+    void editTodo(BuildContext context, String taskId) async {
+      DocumentSnapshot taskSnapshot = await FirebaseFirestore.instance
+          .collection('todo')
+          .doc(taskId)
+          .get();
 
-      showModalBottomSheet(
-        backgroundColor: Colors.white,
-        context: context,
-        isScrollControlled: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (BuildContext context) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: Form(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  Text(
-                    'Edit Task',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+      if (taskSnapshot.exists) {
+        final task = taskSnapshot.data() as Map<String, dynamic>;
+        final TextEditingController taskNameController =
+        TextEditingController(text: task['name']);
+        final TextEditingController taskDescriptionController =
+        TextEditingController(text: task['description']);
+        DateTime? selectedDate = task['dueDate'].toDate();
+        String selectedStatus = task['status'];
+        String selectedType = task['type'];
+
+        showModalBottomSheet(
+          backgroundColor: Colors.white,
+          context: context,
+          isScrollControlled: true,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (BuildContext context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 16,
+                    right: 16,
+                    top: 16,
                   ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: taskNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Task Name',
-                      labelStyle: GoogleFonts.poppins(),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: taskDescriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Task Description',
-                      labelStyle: GoogleFonts.poppins(),
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text(
-                        'Due Date: ${selectedDate != null ? selectedDate?.toLocal().toString().split(' ')[0] : 'Not selected'}',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      Spacer(),
-                      DropdownButton<String>(
-                        value: selectedType,
-                        items: [
-                          DropdownMenuItem(
-                            value: 'Personal',
-                            child: Text('Personal'),
+                  child: Form(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Text(
+                          'Edit Task',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          DropdownMenuItem(
-                            value: 'Work',
-                            child: Text('Work'),
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: taskNameController,
+                          decoration: InputDecoration(
+                            labelText: 'Task Name',
+                            labelStyle: GoogleFonts.poppins(),
+                            border: OutlineInputBorder(),
                           ),
-                        ],
-                        onChanged: (value) {
-                          selectedType = value!;
-                        },
-                        hint: Text('Select Type'),
-                      ),
-                      SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () async {
-                          DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate ?? DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2100),
-                          );
-                          if (pickedDate != null) {
-                            selectedDate = pickedDate;
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
                         ),
-                        child: Text(
-                          'Pick Date',
-                          style: GoogleFonts.poppins(color: Colors.white),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: taskDescriptionController,
+                          decoration: InputDecoration(
+                            labelText: 'Task Description',
+                            labelStyle: GoogleFonts.poppins(),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (taskNameController.text.isNotEmpty &&
-                          taskDescriptionController.text.isNotEmpty &&
-                          selectedDate != null) {
-                        setState(() {
-                          tasks[taskIndex] = {
-                            'name': taskNameController.text,
-                            'description': taskDescriptionController.text,
-                            'dueDate': selectedDate,
-                            'status': selectedStatus,
-                            'type': selectedType,
-                          };
-                        });
-                        Get.back();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                        SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Text(
+                              'Due Date: ${selectedDate != null ? selectedDate?.toLocal().toString().split(' ')[0] : 'Not selected'}',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            Spacer(),
+                            DropdownButton<String>(
+                              value: selectedType,
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'Personal',
+                                  child: Text('Personal'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Work',
+                                  child: Text('Work'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedType = value!;
+                                });
+                              },
+                              hint: Text('Select Type'),
+                            ),
+                            SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () async {
+                                DateTime? pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate ?? DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (pickedDate != null) {
+                                  setState(() {
+                                    selectedDate = pickedDate;
+                                  });
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                              ),
+                              child: Text(
+                                'Pick Date',
+                                style: GoogleFonts.poppins(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (taskNameController.text.isNotEmpty &&
+                                taskDescriptionController.text.isNotEmpty &&
+                                selectedDate != null) {
+                              await FirebaseFirestore.instance
+                                  .collection('todo')
+                                  .doc(taskId)
+                                  .update({
+                                'name': taskNameController.text,
+                                'description': taskDescriptionController.text,
+                                'dueDate': selectedDate,
+                                'status': selectedStatus,
+                                'type': selectedType,
+                              });
+                              Get.back();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                          ),
+                          child: Text(
+                            'Update Task',
+                            style: GoogleFonts.poppins(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      'Update Task',
-                      style: GoogleFonts.poppins(color: Colors.white),
-                    ),
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
+                );
+              },
+            );
+          },
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Task not found!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     }
+
+
     void deleteTask(BuildContext context, int taskIndex) {
       Get.dialog(
         AlertDialog(
@@ -456,7 +517,10 @@ import '../controller/authcontroller.dart';
                         ],
                       ),
                       child: FutureBuilder<DocumentSnapshot>(
-                        future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+                        future: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .get(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return Center(child: CircularProgressIndicator());
@@ -477,17 +541,70 @@ import '../controller/authcontroller.dart';
                                 children: [
                                   Text(
                                     'Profile',
-                                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 22, fontWeight: FontWeight.bold),
                                   ),
                                   SizedBox(height: 20),
-                                  Text(
-                                    'Name: $name',
-                                    style: TextStyle(fontSize: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Name: $name',
+                                        style: GoogleFonts.poppins(fontSize: 16),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () async {
+                                          TextEditingController nameController =
+                                          TextEditingController(text: name);
+
+                                          await showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                title: Text(style: GoogleFonts.poppins(),'Edit Name'),
+                                                content: TextField(
+                                                  controller: nameController,
+                                                  decoration: InputDecoration(
+                                                    hintText: 'Enter new name',
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text('Cancel',style: GoogleFonts.poppins(fontSize: 15.0, color: Colors.redAccent)),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      String newName =
+                                                      nameController.text.trim();
+
+                                                      if (newName.isNotEmpty) {
+                                                        await FirebaseFirestore.instance
+                                                            .collection('users')
+                                                            .doc(user.uid)
+                                                            .update({
+                                                          'name': newName,
+                                                        });
+                                                        Get.back();
+                                                      }
+                                                    },
+                                                    child: Text('Save',style: GoogleFonts.poppins( color: Colors.black)),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   SizedBox(height: 15),
                                   Text(
                                     'Email: $email',
-                                    style: TextStyle(fontSize: 16),
+                                    style: GoogleFonts.poppins(fontSize: 16),
                                   ),
                                   SizedBox(height: 20),
                                   ElevatedButton(
@@ -496,9 +613,11 @@ import '../controller/authcontroller.dart';
                                       Get.back();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black
+                                        backgroundColor: Colors.black),
+                                    child: Text(
+                                      'Logout',
+                                      style: GoogleFonts.poppins(color: Colors.white),
                                     ),
-                                    child: Text('Logout',style: GoogleFonts.poppins(color: Colors.white),),
                                   ),
                                 ],
                               ),
