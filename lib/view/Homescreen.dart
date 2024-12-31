@@ -1,4 +1,4 @@
-  import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
   import 'package:flutter/material.dart';
@@ -18,6 +18,8 @@ import '../controller/authcontroller.dart';
   class _HomescreenState extends State<Homescreen> {
     List<Map<String, dynamic>> tasks = [];
     String selectedValue = 'Personal';
+    String selectedType = 'All';
+    String selectedStatus = 'All';
     final AuthController authController = Get.put(AuthController());
 
     @override
@@ -35,8 +37,7 @@ import '../controller/authcontroller.dart';
             IconButton(
               icon: Icon(Icons.filter_alt),
               onPressed: () {
-                // Add your filter logic here
-                print("Filter button tapped");
+                filteroption(context);
               },
             ),
           ],
@@ -58,6 +59,12 @@ import '../controller/authcontroller.dart';
             }
 
             var tasks = snapshot.data!.docs;
+            if (selectedType != 'All') {
+              tasks = tasks.where((doc) => doc['type'] == selectedType).toList();
+            }
+            if (selectedStatus != 'All') {
+              tasks = tasks.where((doc) => doc['status'] == selectedStatus).toList();
+            }
 
             return ListView.builder(
               itemCount: tasks.length,
@@ -635,5 +642,80 @@ import '../controller/authcontroller.dart';
           },
         );
       }
+    }
+    void filteroption(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Filter Tasks'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedType = newValue!;
+                    });
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: 'All',
+                      child: Text('All',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Personal',
+                      child: Text('Personal',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Work',
+                      child: Text('Work',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                  ],
+                  hint: Text('Select Type',style: GoogleFonts.poppins(color: Colors.black),),
+                ),
+                DropdownButtonFormField<String>(
+                  value: selectedStatus,
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedStatus = newValue!;
+                    });
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: 'All',
+                      child: Text('All',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Pending',
+                      child: Text('Pending',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Complete',
+                      child: Text('Complete',style: GoogleFonts.poppins(color: Colors.black),),
+                    ),
+                  ],
+                  hint: Text('Select Status',style: GoogleFonts.poppins(color: Colors.black),),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Cancel',style: GoogleFonts.poppins(color: Colors.blueAccent),),
+              ),
+              TextButton(
+                onPressed: () {
+                 Get.back();
+                },
+                child: Text('Apply',style: GoogleFonts.poppins(color: Colors.black),),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
