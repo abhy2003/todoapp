@@ -1,16 +1,27 @@
-# todoapp
+# ToDo App
 
-A new Flutter project.
+A simple ToDo app built using Flutter and Firebase. The app allows users to manage tasks, edit them, delete them, and filter them by type and status. The app also supports user authentication via Firebase, allowing users to view and edit their profile.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- *Authentication*: Users can log in and log out using Firebase Authentication.
+- *Task Management*: Users can add, edit, and delete tasks.
+- *Filter Tasks*: Filter tasks based on their type and status.
+- *Profile Management*: Users can view and edit their profile information.
+- *Firebase Integration*: All task data and user data are stored in Firebase Firestore.
 
-A few resources to get you started if this is your first Flutter project:
+## Prerequisites
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Before running the app, make sure you have the following installed:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- [Flutter](https://flutter.dev/docs/get-started/install)
+- [Firebase account](https://firebase.google.com/)
+- A Firebase project with Firebase Authentication and Firestore set up.
+- [Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/) for running the Flutter app.
+
+## Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/abhy2003/todoapp.git
